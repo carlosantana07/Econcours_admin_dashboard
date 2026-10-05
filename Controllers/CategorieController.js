@@ -449,7 +449,7 @@ export default class CategorieController {
 
                 Swal.fire("Succès", res.data.message, "success");
 
-                CategorieController.initDataTable(); // refresh sans reload page
+                this.initDataTable(); // refresh sans reload page
             });
         });
 

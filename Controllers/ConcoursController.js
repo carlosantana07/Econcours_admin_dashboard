@@ -251,6 +251,21 @@ export default class ConcoursController {
                     }
                 },
 
+                 {
+                    data: "description",
+
+                    title: "Description",
+
+                    className: "text-center",
+
+                    render: function (data) {
+
+                        return data
+                            ? data.split("T")[0]
+                            : "-";
+                    }
+                },
+
                 {
                     data: "statut_concours",
 
