@@ -209,9 +209,9 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label for="nom_jeune_fille_modif">Nom de jeune fille (*)</label>
+                                <label for="nom_jeune_fille_modif">Nom de jeune fille</label>
                                 <input id="nom_jeune_fille_modif" class="form-control" type="text"
-                                    name="nom_jeune_fille" placeholder="Entrer le nom de jeune fille" required>
+                                    name="nom_jeune_fille" placeholder="Entrer le nom de jeune fille">
                             </div>
 
                             <div class="col-md-4">
@@ -230,9 +230,9 @@
                         <div class="row">
 
                             <div class="col-md-4">
-                                <label for="emploi_modif">Emploi (*)</label>
+                                <label for="emploi_modif">Emploi</label>
                                 <input id="emploi_modif" class="form-control" type="text" name="emploi"
-                                    placeholder="Entrer l'emploi" required>
+                                    placeholder="Entrer l'emploi">
                             </div>
 
                             <div class="col-md-4">

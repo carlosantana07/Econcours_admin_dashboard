@@ -11,10 +11,8 @@ export default class AdminController {
     }
 
     static logout() {
-
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin");
-
         window.location.href = "../login.php";
     }
 
@@ -29,13 +27,11 @@ export default class AdminController {
     }
 
     static initRegister() {
-
         const form = document.getElementById("registerForm");
 
         if (!form) return;
 
         form.addEventListener("submit", async (e) => {
-
             e.preventDefault();
 
             const formData = new FormData(form);
@@ -49,30 +45,21 @@ export default class AdminController {
                 mot_de_passe: formData.get("mot_de_passe")
             };
 
-            //console.log("DATA ENVOYEES :", data);
-
             await this.register(data);
-
         });
     }
 
     static async register(data) {
-
         const res = await AdminModel.register(data);
 
-        //console.log("REPONSE REGISTER :", res);
-
         if (!res.ok) {
-
             Swal.fire({
                 icon: "error",
                 title: "Erreur",
-                text: res.data?.error ||
-                    "Erreur chargement candidats"
+                text: res.data?.error || "Erreur lors de l'inscription"
             });
 
-
-            return;
+            return false;
         }
 
         window.location.href = "../login.php";
@@ -81,13 +68,11 @@ export default class AdminController {
     }
 
     static initLogin() {
-
         const form = document.getElementById("loginForm");
 
         if (!form) return;
 
         form.addEventListener("submit", async (e) => {
-
             e.preventDefault();
 
             const formData = new FormData(form);
@@ -95,21 +80,17 @@ export default class AdminController {
             const email = formData.get("email");
             const password = formData.get("mot_de_passe");
 
-            // console.log("LOGIN DATA :", {
-            //     email,
-            //     password
-            // });
-
             await this.login(email, password);
-
         });
     }
 
     static async login(email, mot_de_passe) {
         const errorEl = document.getElementById("formError");
 
-        errorEl.style.display = "none";
-        errorEl.textContent = "";
+        if (errorEl) {
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+        }
 
         try {
             const res = await AdminModel.login({
@@ -118,9 +99,11 @@ export default class AdminController {
             });
 
             if (!res.ok) {
-                errorEl.style.display = "block";
-                errorEl.textContent =
-                    res.data.error || "Erreur connexion";
+                if (errorEl) {
+                    errorEl.style.display = "block";
+                    errorEl.textContent =
+                        res.data?.error || "Erreur connexion";
+                }
 
                 return false;
             }
@@ -137,17 +120,19 @@ export default class AdminController {
         } catch (err) {
             console.error("Erreur login :", err);
 
-            errorEl.style.display = "block";
-            errorEl.textContent = "Erreur serveur";
+            if (errorEl) {
+                errorEl.style.display = "block";
+                errorEl.textContent = "Erreur serveur";
+            }
 
             return false;
         }
     }
 
-
     static async loadDashboard() {
-
         const token = this.checkAuth();
+
+        if (!token) return;
 
         const res = await AdminModel.getDashboard(token);
 
@@ -164,14 +149,11 @@ export default class AdminController {
 
         return res.data;
     }
-    static async getAll(params) {
 
-        const token = AdminController.getToken();
+    static async getAll(params) {
+        const token = this.getToken();
 
         if (!token) {
-
-            console.warn("Aucun token administrateur");
-
             return {
                 draw: params?.draw ?? 0,
                 recordsTotal: 0,
@@ -186,12 +168,10 @@ export default class AdminController {
         );
 
         if (!res.ok) {
-
             Swal.fire({
                 icon: "error",
                 title: "Erreur",
-                text:
-                    res.data?.error ||
+                text: res.data?.error ||
                     "Impossible de charger les administrateurs"
             });
 
@@ -207,26 +187,20 @@ export default class AdminController {
     }
 
     static loadAdmins() {
-
-        // console.log(
-        //     "INITIALISATION DATATABLE ADMINS"
-        // );
-
         this.initDataTable();
     }
 
     static initDataTable() {
 
         if ($.fn.DataTable.isDataTable("#adminTable")) {
-            // console.log(
-            //     "DataTable admins déjà initialisé"
-            // );
+            $("#adminTable").DataTable().ajax.reload(null, false);
             return;
         }
 
         $("#adminTable").DataTable({
 
             processing: true,
+
             serverSide: true,
 
             searchDelay: 500,
@@ -238,6 +212,10 @@ export default class AdminController {
                 [10, 25, 50, 100]
             ],
 
+            order: [
+                [6, "desc"]
+            ],
+
             ajax: async function (data, callback) {
 
                 try {
@@ -247,9 +225,10 @@ export default class AdminController {
                         start: data.start,
                         length: data.length,
                         search: data.search?.value || "",
-
-                        orderColumn: data.order?.[0]?.column ?? 0,
-                        orderDir: data.order?.[0]?.dir ?? "desc"
+                        orderColumn: data.order?.[0]?.column ?? 6,
+                        orderDir: data.order?.[0]?.dir === "asc"
+                            ? "asc"
+                            : "desc"
                     };
 
                     const result =
@@ -283,42 +262,40 @@ export default class AdminController {
                                     : "-",
 
                                 `
-                    <button
-                        class="btn btn-warning btn-sm btn-update-admin"
-                        data-id="${admin.id}"
-                        data-nom="${admin.nom || ""}"
-                        data-prenom="${admin.prenom || ""}"
-                        data-role="${admin.role || ""}">
-                        <i class="fa fa-edit"></i>
-                    </button>
-                    `,
+                                <button
+                                    class="btn btn-warning btn-sm btn-update-admin"
+                                    data-id="${admin.id}"
+                                    data-nom="${admin.nom || ""}"
+                                    data-prenom="${admin.prenom || ""}"
+                                    data-role="${admin.role || ""}">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                `,
 
                                 `
-                    <button
-                        class="btn btn-danger btn-sm btn-delete-admin"
-                        data-id="${admin.id}">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                    `
+                                <button
+                                    class="btn btn-danger btn-sm btn-delete-admin"
+                                    data-id="${admin.id}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                                `
                             ];
                         }
                     );
 
                     callback({
                         draw: data.draw,
-
-                        recordsTotal:
-                            result?.recordsTotal ?? 0,
-
-                        recordsFiltered:
-                            result?.recordsFiltered ?? 0,
-
+                        recordsTotal: result?.recordsTotal ?? 0,
+                        recordsFiltered: result?.recordsFiltered ?? 0,
                         data: rows
                     });
 
                 } catch (error) {
 
-                    console.error("Erreur DataTable :", error);
+                    console.error(
+                        "Erreur DataTables admins :",
+                        error
+                    );
 
                     callback({
                         draw: data.draw,
@@ -330,7 +307,8 @@ export default class AdminController {
                     Swal.fire({
                         icon: "error",
                         title: "Erreur",
-                        text: "Impossible de charger les administrateurs"
+                        text:
+                            "Impossible de charger les administrateurs"
                     });
                 }
             },
@@ -346,32 +324,44 @@ export default class AdminController {
 
                 {
                     title: "Nom",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: true
                 },
 
                 {
                     title: "Prénom",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: true
                 },
 
                 {
                     title: "Rôle",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: true
                 },
 
                 {
                     title: "Email",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: true
                 },
 
                 {
                     title: "Téléphone",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: true
                 },
 
                 {
                     title: "Date de création",
-                    className: "text-center"
+                    className: "text-center",
+                    orderable: true,
+                    searchable: false
                 },
 
                 {
@@ -395,15 +385,7 @@ export default class AdminController {
 
             layout: {
                 topStart: [
-                    "pageLength",
-                    // {
-                    //     buttons: [
-                    //         "copy",
-                    //         "excel",
-                    //         "csv",
-                    //         "pdf"
-                    //     ]
-                    // }
+                    "pageLength"
                 ],
 
                 topEnd: "search",
@@ -420,14 +402,14 @@ export default class AdminController {
         const form = document.getElementById("adminForm");
 
         if (!form) {
-            console.error("adminForm introuvable dans le DOM");
             return;
         }
 
         form.addEventListener("submit", async (e) => {
+
             e.preventDefault();
 
-            const token = AdminController.getToken();
+            const token = this.getToken();
 
             const data = {
                 nom: document.getElementById("nom").value,
@@ -438,14 +420,18 @@ export default class AdminController {
                 role: document.getElementById("role").value
             };
 
-            const res = await AdminModel.registerAdmin(token, data);
+            const res = await AdminModel.registerAdmin(
+                token,
+                data
+            );
 
             if (!res.ok) {
                 Swal.fire(
                     "Erreur",
-                    res.data.error || "Suppression impossible",
+                    res.data?.error || "Création impossible",
                     "error"
                 );
+
                 return;
             }
 
@@ -454,11 +440,15 @@ export default class AdminController {
                 res.data.message,
                 "success"
             );
+
             form.reset();
 
             $("#ajouter_admin").modal("hide");
 
-            this.initDataTable();
+            $("#adminTable")
+                .DataTable()
+                .ajax
+                .reload(null, false);
         });
     }
 
@@ -466,13 +456,12 @@ export default class AdminController {
 
         document.addEventListener("click", async (e) => {
 
-            const btn = e.target.closest(".btn-delete-admin");
+            const btn =
+                e.target.closest(".btn-delete-admin");
 
             if (!btn) return;
 
             const id_admin = btn.dataset.id;
-
-            // console.log("ID ADMIN =", id_admin);
 
             const result = await Swal.fire({
                 title: "Supprimer cet administrateur ?",
@@ -495,9 +484,11 @@ export default class AdminController {
             if (!res.ok) {
                 Swal.fire(
                     "Erreur",
-                    res.data.error || "Suppression impossible",
+                    res.data?.error ||
+                    "Suppression impossible",
                     "error"
                 );
+
                 return;
             }
 
@@ -507,7 +498,10 @@ export default class AdminController {
                 "success"
             );
 
-            await this.loadAdmins();
+            $("#adminTable")
+                .DataTable()
+                .ajax
+                .reload(null, false);
         });
     }
 
@@ -515,13 +509,22 @@ export default class AdminController {
 
         document.addEventListener("click", (e) => {
 
-            const btn = e.target.closest(".btn-update-admin");
+            const btn =
+                e.target.closest(".btn-update-admin");
+
             if (!btn) return;
 
-            document.getElementById("edit_admin_id").value = btn.dataset.id;
-            document.getElementById("edit_nom").value = btn.dataset.nom;
-            document.getElementById("edit_prenom").value = btn.dataset.prenom;
-            document.getElementById("edit_role").value = btn.dataset.role;
+            document.getElementById("edit_admin_id").value =
+                btn.dataset.id;
+
+            document.getElementById("edit_nom").value =
+                btn.dataset.nom;
+
+            document.getElementById("edit_prenom").value =
+                btn.dataset.prenom;
+
+            document.getElementById("edit_role").value =
+                btn.dataset.role;
 
             $("#editAdminModal").modal("show");
         });
@@ -531,35 +534,57 @@ export default class AdminController {
 
         document.addEventListener("click", async (e) => {
 
-            const btn = e.target.closest("#btn-update-admin");
+            const btn =
+                e.target.closest("#btn-update-admin");
+
             if (!btn) return;
 
             e.preventDefault();
 
-            const token = AdminController.getToken();
+            const token = this.getToken();
 
-            const id_admin = document.getElementById("edit_admin_id").value;
+            const id_admin =
+                document.getElementById("edit_admin_id").value;
 
             const data = {
-                nom: document.getElementById("edit_nom").value,
-                prenom: document.getElementById("edit_prenom").value,
-                role: document.getElementById("edit_role").value
+                nom:
+                    document.getElementById("edit_nom").value,
+
+                prenom:
+                    document.getElementById("edit_prenom").value,
+
+                role:
+                    document.getElementById("edit_role").value
             };
 
-            //console.log("UPDATE DATA :", data);
-
-            const res = await AdminModel.updateAdmin(token, id_admin, data);
+            const res = await AdminModel.updateAdmin(
+                token,
+                id_admin,
+                data
+            );
 
             if (!res.ok) {
-                Swal.fire("Erreur", res.data?.error || "Erreur update", "error");
+                Swal.fire(
+                    "Erreur",
+                    res.data?.error || "Erreur update",
+                    "error"
+                );
+
                 return;
             }
 
-            Swal.fire("Succès", res.data.message, "success");
+            Swal.fire(
+                "Succès",
+                res.data.message,
+                "success"
+            );
 
             $("#editAdminModal").modal("hide");
 
-            await AdminController.loadAdmins();
+            $("#adminTable")
+                .DataTable()
+                .ajax
+                .reload(null, false);
         });
     }
 
@@ -567,7 +592,8 @@ export default class AdminController {
 
         document.addEventListener("click", (e) => {
 
-            const btn = e.target.closest("#btnLogout");
+            const btn =
+                e.target.closest("#btnLogout");
 
             if (!btn) return;
 
@@ -583,20 +609,14 @@ export default class AdminController {
             }).then((result) => {
 
                 if (result.isConfirmed) {
-
-                    localStorage.removeItem("admin_token");
-                    localStorage.removeItem("admin");
-
-                    window.location.href = "../login.php";
+                    this.logout();
                 }
-
             });
-
         });
     }
 
-
     static async loadProfile() {
+
         const token = this.getToken();
 
         if (!token) {
@@ -605,18 +625,24 @@ export default class AdminController {
                 "Administrateur introuvable",
                 "error"
             );
+
             return;
         }
 
         try {
-            const res = await AdminModel.getProfile(token);
+
+            const res =
+                await AdminModel.getProfile(token);
 
             if (!res.ok) {
+
                 Swal.fire(
                     "Erreur",
-                    res.data.error || "Impossible de récupérer le profil",
+                    res.data?.error ||
+                    "Impossible de récupérer le profil",
                     "error"
                 );
+
                 return;
             }
 
@@ -626,35 +652,48 @@ export default class AdminController {
             const prenom = admin.prenom || "";
 
             const initials = (
-                nom.charAt(0) + prenom.charAt(0)
+                nom.charAt(0) +
+                prenom.charAt(0)
             ).toUpperCase();
 
-            document.getElementById("profileAvatar").textContent =
-                initials;
+            document.getElementById(
+                "profileAvatar"
+            ).textContent = initials;
 
-            document.getElementById("adminNomComplet").textContent =
-                `${nom} ${prenom}`;
+            document.getElementById(
+                "adminNomComplet"
+            ).textContent = `${nom} ${prenom}`;
 
-            document.getElementById("adminRole").textContent =
-                admin.role || "-";
+            document.getElementById(
+                "adminRole"
+            ).textContent = admin.role || "-";
 
-            document.getElementById("profil_nom").textContent =
-                nom;
+            document.getElementById(
+                "profil_nom"
+            ).textContent = nom;
 
-            document.getElementById("profil_prenom").textContent =
-                prenom;
+            document.getElementById(
+                "profil_prenom"
+            ).textContent = prenom;
 
-            document.getElementById("profil_email").textContent =
-                admin.email || "-";
+            document.getElementById(
+                "profil_email"
+            ).textContent = admin.email || "-";
 
-            document.getElementById("profil_tel").textContent =
-                admin.telephone || "-";
+            document.getElementById(
+                "profil_tel"
+            ).textContent = admin.telephone || "-";
 
-            document.getElementById("profil_role").textContent =
-                admin.role || "-";
+            document.getElementById(
+                "profil_role"
+            ).textContent = admin.role || "-";
 
         } catch (error) {
-            console.error("Erreur chargement profil :", error);
+
+            console.error(
+                "Erreur chargement profil :",
+                error
+            );
 
             Swal.fire(
                 "Erreur",
@@ -664,15 +703,26 @@ export default class AdminController {
         }
     }
 
-
     static initImportListe() {
 
-        const boutons = document.querySelectorAll(".btn-upload-liste");
-        const inputType = document.getElementById("typeListe");
-        const inputFile = document.getElementById("fichierListe");
-        const btnImporter = document.getElementById("btnImporterListe");
+        const boutons =
+            document.querySelectorAll(".btn-upload-liste");
 
-        if (!boutons.length || !inputType || !inputFile || !btnImporter) {
+        const inputType =
+            document.getElementById("typeListe");
+
+        const inputFile =
+            document.getElementById("fichierListe");
+
+        const btnImporter =
+            document.getElementById("btnImporterListe");
+
+        if (
+            !boutons.length ||
+            !inputType ||
+            !inputFile ||
+            !btnImporter
+        ) {
             return;
         }
 
@@ -680,109 +730,121 @@ export default class AdminController {
 
             button.addEventListener("click", () => {
 
-                const type = button.dataset.type;
+                inputType.value =
+                    button.dataset.type;
 
-                inputType.value = type;
                 inputFile.value = "";
-
-                // console.log("Module sélectionné :", type);
-
             });
-
         });
 
-        btnImporter.addEventListener("click", async () => {
+        btnImporter.addEventListener(
+            "click",
+            async () => {
 
-            const token = this.getToken();
-            const type = inputType.value;
-            const file = inputFile.files[0];
+                const token = this.getToken();
 
-            if (!type) {
+                const type =
+                    inputType.value;
 
-                Swal.fire(
-                    "Erreur",
-                    "Le type de données est introuvable.",
-                    "error"
-                );
+                const file =
+                    inputFile.files[0];
 
-                return;
-            }
-
-            if (!file) {
-
-                Swal.fire(
-                    "Attention",
-                    "Veuillez sélectionner un fichier.",
-                    "warning"
-                );
-
-                return;
-            }
-
-            try {
-
-                btnImporter.disabled = true;
-
-                btnImporter.innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Importation...
-            `;
-
-                const res = await AdminModel.importExcel(
-                    token,
-                    type,
-                    file
-                );
-
-                if (!res.ok) {
+                if (!type) {
 
                     Swal.fire(
                         "Erreur",
-                        res.data?.error ||
-                        res.data?.message ||
-                        "Erreur lors de l'importation.",
+                        "Le type de données est introuvable.",
                         "error"
                     );
 
                     return;
                 }
 
-                await Swal.fire(
-                    "Importation réussie",
-                    res.data.message ||
-                    "La liste a été importée avec succès.",
-                    "success"
-                );
+                if (!file) {
 
-                inputFile.value = "";
+                    Swal.fire(
+                        "Attention",
+                        "Veuillez sélectionner un fichier.",
+                        "warning"
+                    );
 
-                $("#modalUploadListe").modal("hide");
+                    return;
+                }
 
-                this.initDataTable();
+                try {
 
-            } catch (error) {
+                    btnImporter.disabled = true;
 
-                // console.error("Erreur import liste :", error);
+                    btnImporter.innerHTML = `
+                        <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                        Importation...
+                    `;
 
-                Swal.fire(
-                    "Erreur",
-                    "Une erreur est survenue lors de l'importation.",
-                    "error"
-                );
+                    const res =
+                        await AdminModel.importExcel(
+                            token,
+                            type,
+                            file
+                        );
 
-            } finally {
+                    if (!res.ok) {
 
-                btnImporter.disabled = false;
+                        Swal.fire(
+                            "Erreur",
+                            res.data?.error ||
+                            res.data?.message ||
+                            "Erreur lors de l'importation.",
+                            "error"
+                        );
 
-                btnImporter.innerHTML = `
-                <i class="fa-solid fa-upload mr-1"></i>
-                Importer
-            `;
+                        return;
+                    }
 
+                    await Swal.fire(
+                        "Importation réussie",
+                        res.data.message ||
+                        "La liste a été importée avec succès.",
+                        "success"
+                    );
+
+                    inputFile.value = "";
+
+                    $("#modalUploadListe").modal("hide");
+
+                    if (
+                        $.fn.DataTable.isDataTable(
+                            "#adminTable"
+                        )
+                    ) {
+                        $("#adminTable")
+                            .DataTable()
+                            .ajax
+                            .reload(null, false);
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "Erreur import liste :",
+                        error
+                    );
+
+                    Swal.fire(
+                        "Erreur",
+                        "Une erreur est survenue lors de l'importation.",
+                        "error"
+                    );
+
+                } finally {
+
+                    btnImporter.disabled = false;
+
+                    btnImporter.innerHTML = `
+                        <i class="fa-solid fa-upload mr-1"></i>
+                        Importer
+                    `;
+                }
             }
-
-        });
+        );
     }
-
-
 }
