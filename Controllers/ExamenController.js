@@ -138,80 +138,74 @@ export default class ExamenController {
                             data.order?.[0]?.dir ?? "asc"
                     }
 
-                    const result =
-                        await ExamenController.getAll(
-                            params
-                        );
+                    const result = await ExamenController.getAll(params);
 
-                    const examens =
-                        Array.isArray(result?.data)
-                            ? result.data
-                            : Object.values(
-                                result?.data || {}
-                            );
+                    const examens = Array.isArray(result?.data)
+                        ? result.data
+                        : [];
+                    const rows = examens.map((item, index) => {
 
-                    const rows =
-                        examens.map(
-                            (item, index) => {
+                        // Conserve ici tout le contenu actuel de ta fonction map(){
 
-                                const date =
-                                    item.date_examen
-                                        ? item.date_examen
-                                            .split("T")[0]
-                                        : "-";
+                        const date =
+                            item.date_examen
+                                ? item.date_examen
+                                    .split("T")[0]
+                                : "-";
 
-                                let heure = "-";
+                        let heure = "-";
 
-                                if (item.heure) {
+                        if (item.heure) {
 
-                                    const dateHeure =
-                                        new Date(
-                                            item.heure
-                                        );
+                            const dateHeure =
+                                new Date(
+                                    item.heure
+                                );
 
-                                    if (
-                                        !isNaN(
-                                            dateHeure.getTime()
-                                        )
-                                    ) {
+                            if (
+                                !isNaN(
+                                    dateHeure.getTime()
+                                )
+                            ) {
 
-                                        heure =
-                                            dateHeure.toLocaleTimeString(
-                                                "fr-FR",
-                                                {
-                                                    hour: "2-digit",
-                                                    minute: "2-digit"
-                                                }
-                                            );
-                                    }
-                                }
+                                heure =
+                                    dateHeure.toLocaleTimeString(
+                                        "fr-FR",
+                                        {
+                                            hour: "2-digit",
+                                            minute: "2-digit"
+                                        }
+                                    );
+                            }
+                        }
 
-                                const concoursHTML = item.concours
-                                    ? `
+                        const concoursHTML = item.concours
+                            ? `
         <span>
             ${item.concours.nom}
         </span>
     `
-                                    : '<span class="text-muted">Aucun concours</span>';
+                            : '<span class="text-muted">Aucun concours</span>';
 
-                                return [
 
-                                    params.start +
-                                    index +
-                                    1,
-                                    concoursHTML,
+                        return [
 
-                                    date,
+                            params.start +
+                            index +
+                            1,
+                            concoursHTML,
 
-                                    heure,
+                            date,
 
-                                    item.lieu || "-",
+                            heure,
 
-                                    item.intitule || "-",
+                            item.lieu || "-",
 
-                                    item.type_examen || "-",
+                            item.intitule || "-",
 
-                                    `
+                            item.type_examen || "-",
+
+                            `
                                 <button
                                     class="btn btn-warning btn-sm btn-edit-examen"
                                     data-id="${item.id_examen}"
@@ -225,7 +219,7 @@ export default class ExamenController {
                                 </button>
                                 `,
 
-                                    `
+                            `
                                 <button
                                     class="btn btn-danger btn-sm btn-delete-examen"
                                     data-id="${item.id_examen}"
@@ -234,7 +228,7 @@ export default class ExamenController {
                                 </button>
                                 `,
 
-                               `
+                            `
                                 <button
                                     class="btn btn-success btn-sm btn-import-questions"
                                     data-id="${item.id_examen}"
@@ -244,7 +238,7 @@ export default class ExamenController {
                                 </button>
                                 `,
 
-                                `
+                            `
                                 <button
                                     class="btn btn-info btn-sm btn-import-reponses"
                                     data-id="${item.id_examen}"
@@ -252,10 +246,18 @@ export default class ExamenController {
                                     title="Importer les réponses">
                                     <i class="fa fa-file-import"></i>
                                 </button>
-                                `
-                                ];
-                            }
-                        );
+                                `,
+
+                            `<button
+                                    class="btn btn-primary btn-sm btn-voir-questions-reponses"
+                                    data-id="${item.id_examen}"
+                                    data-intitule="${item.intitule || ""}"
+                                    title="Voir les questions et réponses">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </button>`
+                        ];
+                    }
+                    );
 
                     callback({
 
@@ -298,7 +300,7 @@ export default class ExamenController {
                 {
                     title: "Concours",
                     className: "text-center",
-        
+
                 },
 
                 {
@@ -341,13 +343,20 @@ export default class ExamenController {
                 },
 
                 {
-                title: "Questions",
-                className: "text-center",
-                orderable: false,
-                searchable: false
+                    title: "Questions",
+                    className: "text-center",
+                    orderable: false,
+                    searchable: false
                 },
                 {
                     title: "Réponses",
+                    className: "text-center",
+                    orderable: false,
+                    searchable: false
+                },
+
+                {
+                    title: "Questions / Réponses",
                     className: "text-center",
                     orderable: false,
                     searchable: false
@@ -468,16 +477,6 @@ export default class ExamenController {
 
             const id_concours =
                 document.getElementById("id_concours").value;
-
-
-            // Vérification
-            // console.log("INTITULE :", intitule);
-            // console.log("TYPE :", type_examen);
-            // console.log("COEFFICIENT :", coefficient);
-            // console.log("DATE :", date_examen);
-            // console.log("HEURE :", heure);
-            // console.log("LIEU :", lieu);
-            // console.log("CONCOURS :", id_concours);
 
 
             // Validation
@@ -939,141 +938,303 @@ export default class ExamenController {
     }
 
     static initImportExcel() {
-    const inputQuestions = document.getElementById("excel-questions");
-    const inputReponses = document.getElementById("excel-reponses");
+        const inputQuestions = document.getElementById("excel-questions");
+        const inputReponses = document.getElementById("excel-reponses");
 
-    if (!inputQuestions || !inputReponses) {
-        console.error("Les champs d'importation Excel sont introuvables.");
-        return;
+        if (!inputQuestions || !inputReponses) {
+            console.error("Les champs d'importation Excel sont introuvables.");
+            return;
+        }
+
+        let examenSelectionne = null;
+        let concoursSelectionne = null;
+
+        $("#dataTable")
+            .off("click.importQuestions", ".btn-import-questions")
+            .on("click.importQuestions", ".btn-import-questions", function () {
+                examenSelectionne = $(this).data("id");
+                concoursSelectionne = $(this).data("concours-id");
+
+                inputQuestions.value = "";
+                inputQuestions.click();
+            });
+
+        $("#dataTable")
+            .off("click.importReponses", ".btn-import-reponses")
+            .on("click.importReponses", ".btn-import-reponses", function () {
+                examenSelectionne = $(this).data("id");
+                concoursSelectionne = $(this).data("concours-id");
+
+                inputReponses.value = "";
+                inputReponses.click();
+            });
+
+        inputQuestions.addEventListener("change", async function () {
+            const file = this.files[0];
+
+            if (!file || !examenSelectionne || !concoursSelectionne) {
+                return;
+            }
+
+            const token = localStorage.getItem("admin_token");
+
+            if (!token) {
+                Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
+                return;
+            }
+
+            Swal.fire({
+                title: "Importation des questions",
+                text: "Veuillez patienter...",
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const result = await ExamenModel.uploadQuestions(
+                    token,
+                    examenSelectionne,
+                    concoursSelectionne,
+                    file
+                );
+
+                if (!result.ok) {
+                    throw new Error(
+                        result.data?.error || "L'importation des questions a échoué."
+                    );
+                }
+
+                await Swal.fire({
+                    icon: "success",
+                    title: "Importation réussie",
+                    text: result.data.message || "Les questions ont été importées."
+                });
+            } catch (error) {
+                console.error(error);
+
+                await Swal.fire({
+                    icon: "error",
+                    title: "Échec de l'importation",
+                    text: error.message
+                });
+            } finally {
+                this.value = "";
+            }
+        });
+
+        inputReponses.addEventListener("change", async function () {
+            const file = this.files[0];
+
+            if (!file || !examenSelectionne || !concoursSelectionne) {
+                return;
+            }
+
+            const token = localStorage.getItem("admin_token");
+
+            if (!token) {
+                Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
+                return;
+            }
+
+            Swal.fire({
+                title: "Importation des réponses",
+                text: "Veuillez patienter...",
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const result = await ExamenModel.uploadReponses(
+                    token,
+                    examenSelectionne,
+                    concoursSelectionne,
+                    file
+                );
+
+                if (!result.ok) {
+                    throw new Error(
+                        result.data?.error || "L'importation des réponses a échoué."
+                    );
+                }
+
+                await Swal.fire({
+                    icon: "success",
+                    title: "Importation réussie",
+                    text: result.data.message || "Les réponses ont été importées."
+                });
+            } catch (error) {
+                console.error(error);
+
+                await Swal.fire({
+                    icon: "error",
+                    title: "Échec de l'importation",
+                    text: error.message
+                });
+            } finally {
+                this.value = "";
+            }
+        });
     }
 
-    let examenSelectionne = null;
-    let concoursSelectionne = null;
 
-    $("#dataTable")
-        .off("click.importQuestions", ".btn-import-questions")
-        .on("click.importQuestions", ".btn-import-questions", function () {
-            examenSelectionne = $(this).data("id");
-            concoursSelectionne = $(this).data("concours-id");
+    static initQuestionsReponses() {
+        $(document)
+            .off("click.questionsReponses", "#dataTable .btn-voir-questions-reponses")
+            .on(
+                "click.questionsReponses",
+                "#dataTable .btn-voir-questions-reponses",
+                async function (e) {
+                    e.preventDefault();
 
-            inputQuestions.value = "";
-            inputQuestions.click();
-        });
+                    const idExamen = $(this).data("id");
+                    const intitule = $(this).data("intitule") || "Examen";
 
-    $("#dataTable")
-        .off("click.importReponses", ".btn-import-reponses")
-        .on("click.importReponses", ".btn-import-reponses", function () {
-            examenSelectionne = $(this).data("id");
-            concoursSelectionne = $(this).data("concours-id");
+                    const tbody = document.getElementById("tableQuestionsReponses");
+                    const resume = document.getElementById("resumeQuestionsReponses");
+                    const chargement = document.getElementById("chargementQuestionsReponses");
+                    const erreur = document.getElementById("erreurQuestionsReponses");
+                    const titre = document.getElementById("titreExamenQuestionsReponses");
 
-            inputReponses.value = "";
-            inputReponses.click();
-        });
+                    titre.textContent = intitule;
+                    resume.innerHTML = "";
+                    erreur.classList.add("d-none");
+                    erreur.textContent = "";
+                    chargement.classList.remove("d-none");
 
-    inputQuestions.addEventListener("change", async function () {
-        const file = this.files[0];
+                    tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">
+                            Chargement des données...
+                        </td>
+                    </tr>
+                `;
 
-        if (!file || !examenSelectionne || !concoursSelectionne) {
-            return;
-        }
+                    $("#modalQuestionsReponses").modal("show");
 
-        const token = localStorage.getItem("admin_token");
+                    try {
+                        const token = localStorage.getItem("admin_token");
 
-        if (!token) {
-            Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
-            return;
-        }
+                        if (!token) {
+                            throw new Error(
+                                "Votre session a expiré. Veuillez vous reconnecter."
+                            );
+                        }
 
-        Swal.fire({
-            title: "Importation des questions",
-            text: "Veuillez patienter...",
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
+                        if (!idExamen) {
+                            throw new Error("Identifiant de l'examen introuvable.");
+                        }
 
-        try {
-            const result = await ExamenModel.uploadQuestions(
-                token,
-                examenSelectionne,
-                concoursSelectionne,
-                file
+                        const result = await ExamenModel.getQuestionsAndReponses(
+                            token,
+                            idExamen
+                        );
+
+                        if (!result.ok) {
+                            throw new Error(
+                                result.data?.error ||
+                                result.data?.message ||
+                                "Impossible de récupérer les questions et réponses."
+                            );
+                        }
+
+                        const questions = result.data.data || [];
+                        const nombreQuestions = result.data.total ?? questions.length;
+                        const nombreManquantes =
+                            result.data.reponses_manquantes?.length ?? 0;
+                        const nombreCompletes = Math.max(
+                            0,
+                            nombreQuestions - nombreManquantes
+                        );
+
+                        resume.innerHTML = `
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <div class="text-muted small">Questions</div>
+                                    <div class="fs-3 fw-bold text-primary">
+                                        ${nombreQuestions}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <div class="text-muted small">Réponses disponibles</div>
+                                    <div class="fs-3 fw-bold text-success">
+                                        ${nombreCompletes}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <div class="text-muted small">Réponses manquantes</div>
+                                    <div class="fs-3 fw-bold text-danger">
+                                        ${nombreManquantes}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                        if (questions.length === 0) {
+                            tbody.innerHTML = `
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    Aucune question disponible pour cet examen.
+                                </td>
+                            </tr>
+                        `;
+                            return;
+                        }
+
+                        tbody.innerHTML = questions.map((item) => `
+                        <tr>
+                            <td class="text-center fw-bold">
+                                ${item.numero ?? "-"}
+                            </td>
+                            <td style="white-space: pre-wrap;">${ExamenController.escapeHTML(item.question || "")}</td>
+                            <td style="white-space: pre-wrap;">
+                                ${item.reponse !== null &&
+                                item.reponse !== undefined &&
+                                item.reponse !== ""
+                                ? ExamenController.escapeHTML(item.reponse)
+                                : '<span class="badge bg-danger">Réponse manquante</span>'
+                            }
+                            </td>
+                        </tr>
+                    `).join("");
+
+                    } catch (error) {
+                        tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                Impossible d'afficher les données.
+                            </td>
+                        </tr>
+                    `;
+
+                        erreur.textContent =
+                            error.message || "Une erreur est survenue.";
+                        erreur.classList.remove("d-none");
+
+                    } finally {
+                        chargement.classList.add("d-none");
+                    }
+                }
             );
+    }
 
-            if (!result.ok) {
-                throw new Error(
-                    result.data?.error || "L'importation des questions a échoué."
-                );
-            }
 
-            await Swal.fire({
-                icon: "success",
-                title: "Importation réussie",
-                text: result.data.message || "Les questions ont été importées."
-            });
-        } catch (error) {
-            console.error(error);
 
-            await Swal.fire({
-                icon: "error",
-                title: "Échec de l'importation",
-                text: error.message
-            });
-        } finally {
-            this.value = "";
-        }
-    });
-
-    inputReponses.addEventListener("change", async function () {
-        const file = this.files[0];
-
-        if (!file || !examenSelectionne || !concoursSelectionne) {
-            return;
-        }
-
-        const token = localStorage.getItem("admin_token");
-
-        if (!token) {
-            Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
-            return;
-        }
-
-        Swal.fire({
-            title: "Importation des réponses",
-            text: "Veuillez patienter...",
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        try {
-            const result = await ExamenModel.uploadReponses(
-                token,
-                examenSelectionne,
-                concoursSelectionne,
-                file
-            );
-
-            if (!result.ok) {
-                throw new Error(
-                    result.data?.error || "L'importation des réponses a échoué."
-                );
-            }
-
-            await Swal.fire({
-                icon: "success",
-                title: "Importation réussie",
-                text: result.data.message || "Les réponses ont été importées."
-            });
-        } catch (error) {
-            console.error(error);
-
-            await Swal.fire({
-                icon: "error",
-                title: "Échec de l'importation",
-                text: error.message
-            });
-        } finally {
-            this.value = "";
-        }
-    });
-}
+    static escapeHTML(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 }

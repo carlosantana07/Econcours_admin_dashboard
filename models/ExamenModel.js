@@ -21,7 +21,6 @@ export default class ExamenModel {
     }
 
     static async getAllExamens(token, params = {}) {
-
         const query = new URLSearchParams({
             draw: params.draw ?? 0,
             start: params.start ?? 0,
@@ -31,25 +30,50 @@ export default class ExamenModel {
             orderDir: params.orderDir ?? "asc"
         });
 
-        const url =
-            `${API_URL}/examen/list-exam?${query.toString()}`;
+        const url = `${API_URL}/examen/list-exam?${query.toString()}`;
 
-        const res = await fetch(
-            url,
-            {
+        try {
+            const res = await fetch(url, {
                 method: "GET",
                 headers: {
-                    "Authorization": "Bearer " + token
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json"
                 }
+            });
+
+            const text = await res.text();
+
+            let result;
+
+            try {
+                result = JSON.parse(text);
+            } catch {
+                console.error("Réponse non JSON du serveur :", text);
+
+                return {
+                    ok: false,
+                    status: res.status,
+                    data: {
+                        error: "Le serveur n'a pas renvoyé une réponse JSON valide."
+                    }
+                };
             }
-        );
+            return {
+                ok: res.ok,
+                status: res.status,
+                data: result
+            };
+        } catch (error) {
+            console.error("Erreur réseau lors du chargement des examens :", error);
 
-        const result = await res.json();
-
-        return {
-            ok: res.ok,
-            data: result
-        };
+            return {
+                ok: false,
+                status: 0,
+                data: {
+                    error: "Impossible de contacter le serveur."
+                }
+            };
+        }
     }
 
     static async getDetailExamen(token, id_examen) {
@@ -220,94 +244,130 @@ export default class ExamenModel {
     }
 
     static async uploadQuestions(token, idExamen, idConcours, file) {
-    const formData = new FormData();
+        const formData = new FormData();
 
-    formData.append("file", file);
-    formData.append("id_examen", idExamen);
-    formData.append("id_concours", idConcours);
-
-    try {
-        const response = await fetch(`${API_URL}/upload-exam-question`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const text = await response.text();
-
-        let data;
+        formData.append("file", file);
+        formData.append("id_examen", idExamen);
+        formData.append("id_concours", idConcours);
 
         try {
-            data = JSON.parse(text);
-        } catch {
-            data = {
-                message: text || "Réponse invalide du serveur."
+            const response = await fetch(`${API_URL}/upload-exam-question`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const text = await response.text();
+
+            let data;
+
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = {
+                    message: text || "Réponse invalide du serveur."
+                };
+            }
+
+            return {
+                ok: response.ok,
+                status: response.status,
+                data
+            };
+        } catch (error) {
+            console.error("Erreur lors de l'importation des questions :", error);
+
+            return {
+                ok: false,
+                status: 0,
+                data: {
+                    message: "Impossible de contacter le serveur."
+                }
             };
         }
-
-        return {
-            ok: response.ok,
-            status: response.status,
-            data
-        };
-    } catch (error) {
-        console.error("Erreur lors de l'importation des questions :", error);
-
-        return {
-            ok: false,
-            status: 0,
-            data: {
-                message: "Impossible de contacter le serveur."
-            }
-        };
     }
-}
 
-static async uploadReponses(token, idExamen, idConcours, file) {
-    const formData = new FormData();
+    static async uploadReponses(token, idExamen, idConcours, file) {
+        const formData = new FormData();
 
-    formData.append("file", file);
-    formData.append("id_examen", idExamen);
-    formData.append("id_concours", idConcours);
-
-    try {
-        const response = await fetch(`${API_URL}/upload-exam-response`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const text = await response.text();
-
-        let data;
+        formData.append("file", file);
+        formData.append("id_examen", idExamen);
+        formData.append("id_concours", idConcours);
 
         try {
-            data = JSON.parse(text);
-        } catch {
-            data = {
-                message: text || "Réponse invalide du serveur."
+            const response = await fetch(`${API_URL}/upload-exam-response`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const text = await response.text();
+
+            let data;
+
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = {
+                    message: text || "Réponse invalide du serveur."
+                };
+            }
+
+            return {
+                ok: response.ok,
+                status: response.status,
+                data
+            };
+        } catch (error) {
+            console.error("Erreur lors de l'importation des réponses :", error);
+
+            return {
+                ok: false,
+                status: 0,
+                data: {
+                    message: "Impossible de contacter le serveur."
+                }
             };
         }
-
-        return {
-            ok: response.ok,
-            status: response.status,
-            data
-        };
-    } catch (error) {
-        console.error("Erreur lors de l'importation des réponses :", error);
-
-        return {
-            ok: false,
-            status: 0,
-            data: {
-                message: "Impossible de contacter le serveur."
-            }
-        };
     }
-}
+
+    static async getQuestionsAndReponses(token, idExamen) {
+        try {
+            const response = await fetch(
+                `${API_URL}/exam/${idExamen}/questions-reponses`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json"
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            return {
+                ok: response.ok,
+                status: response.status,
+                data
+            };
+        } catch (error) {
+            console.error(
+                "Erreur lors de la récupération des questions et réponses :",
+                error
+            );
+
+            return {
+                ok: false,
+                status: 0,
+                data: {
+                    error: "Impossible de contacter le serveur."
+                }
+            };
+        }
+    }
 }

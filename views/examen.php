@@ -107,13 +107,14 @@
                                                 <th class="text-center">Supprimer</th>
                                                 <th class="text-center">Questions</th>
                                                 <th class="text-center">Réponse</th>
+                                                <th class="text-center">Questions / Réponses</th>
 
                                             </tr>
                                         </thead>
                                         <tfoot>
                                             <tr>
-                                                <th class="text-center">Concours</th>
                                                 <th class="text-center">N°</th>
+                                                <th class="text-center">Concours</th>
                                                 <th class="text-center">Date de l'examen</th>
                                                 <th class="text-center">Heure</th>
                                                 <th class="text-center">Lieu</th>
@@ -124,6 +125,7 @@
                                                 <th class="text-center">Supprimer</th>
                                                 <th class="text-center">Questions</th>
                                                 <th class="text-center">Réponse</th>
+                                                <th class="text-center">Questions / Réponses</th>
                                             </tr>
                                         </tfoot>
 
@@ -208,6 +210,8 @@
                 AdminController.initImportListe();
 
                 ExamenController.initImportExcel();
+
+                ExamenController.initQuestionsReponses();
 
                 AdminController.initLogout();
 
