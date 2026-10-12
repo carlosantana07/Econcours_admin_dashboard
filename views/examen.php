@@ -95,18 +95,24 @@
                                         <thead>
                                             <tr>
                                                 <th class="text-center">N°</th>
+                                                <th class="text-center">Concours</th>
                                                 <th class="text-center">Date de l'examen</th>
                                                 <th class="text-center">Heure</th>
                                                 <th class="text-center">Lieu</th>
                                                 <!-- <th class="text-center">Coefficient</th> -->
                                                 <th class="text-center">Intitulé</th>
                                                 <th class="text-center">Type d'examen</th>
+                                                
                                                 <th class="text-center">Modifier</th>
                                                 <th class="text-center">Supprimer</th>
+                                                <th class="text-center">Questions</th>
+                                                <th class="text-center">Réponse</th>
+
                                             </tr>
                                         </thead>
                                         <tfoot>
                                             <tr>
+                                                <th class="text-center">Concours</th>
                                                 <th class="text-center">N°</th>
                                                 <th class="text-center">Date de l'examen</th>
                                                 <th class="text-center">Heure</th>
@@ -116,6 +122,8 @@
                                                 <th class="text-center">Type d'examen</th>
                                                 <th class="text-center">Modifier</th>
                                                 <th class="text-center">Supprimer</th>
+                                                <th class="text-center">Questions</th>
+                                                <th class="text-center">Réponse</th>
                                             </tr>
                                         </tfoot>
 
@@ -199,13 +207,26 @@
 
                 AdminController.initImportListe();
 
+                ExamenController.initImportExcel();
+
                 AdminController.initLogout();
 
             }
         );
     </script>
+<input
+    type="file"
+    id="excel-questions"
+    accept=".xls,.xlsx,.xlsb,.xltx,.xltm"
+    hidden
+>
 
-
+<input
+    type="file"
+    id="excel-reponses"
+    accept=".csv,.xls,.xlsx,.xlsb"
+    hidden
+>
 
 </body>
 

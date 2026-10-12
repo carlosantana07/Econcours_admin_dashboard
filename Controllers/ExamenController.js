@@ -186,11 +186,20 @@ export default class ExamenController {
                                     }
                                 }
 
+                                const concoursHTML = item.concours
+                                    ? `
+        <span>
+            ${item.concours.nom}
+        </span>
+    `
+                                    : '<span class="text-muted">Aucun concours</span>';
+
                                 return [
 
                                     params.start +
                                     index +
                                     1,
+                                    concoursHTML,
 
                                     date,
 
@@ -222,6 +231,26 @@ export default class ExamenController {
                                     data-id="${item.id_examen}"
                                     title="Supprimer">
                                     <i class="fa fa-trash"></i>
+                                </button>
+                                `,
+
+                               `
+                                <button
+                                    class="btn btn-success btn-sm btn-import-questions"
+                                    data-id="${item.id_examen}"
+                                    data-concours-id="${item.concours?.id_concours || item.id_concours}"
+                                    title="Importer les questions">
+                                    <i class="fa fa-file-excel"></i>
+                                </button>
+                                `,
+
+                                `
+                                <button
+                                    class="btn btn-info btn-sm btn-import-reponses"
+                                    data-id="${item.id_examen}"
+                                    data-concours-id="${item.concours?.id_concours || item.id_concours}"
+                                    title="Importer les réponses">
+                                    <i class="fa fa-file-import"></i>
                                 </button>
                                 `
                                 ];
@@ -267,6 +296,12 @@ export default class ExamenController {
                 },
 
                 {
+                    title: "Concours",
+                    className: "text-center",
+        
+                },
+
+                {
                     title: "Date",
                     className: "text-center"
                 },
@@ -303,6 +338,19 @@ export default class ExamenController {
                     className: "text-center",
                     orderable: false,
                     searchable: false
+                },
+
+                {
+                title: "Questions",
+                className: "text-center",
+                orderable: false,
+                searchable: false
+                },
+                {
+                    title: "Réponses",
+                    className: "text-center",
+                    orderable: false,
+                    searchable: false
                 }
 
             ],
@@ -317,7 +365,7 @@ export default class ExamenController {
                     "pageLength",
                     {
                         buttons: [
-                           
+
                             {
                                 text: '<i class="fa fa-file-excel"></i> Excel',
                                 className: "btn-export-excel",
@@ -348,6 +396,7 @@ export default class ExamenController {
             }
         });
     }
+
     // =========================================
     // CHARGER LES CONCOURS
     // =========================================
@@ -472,7 +521,7 @@ export default class ExamenController {
             };
 
 
-           // console.log("DATA EXAMEN :", data);
+            // console.log("DATA EXAMEN :", data);
 
 
             const token = AdminController.getToken();
@@ -483,7 +532,7 @@ export default class ExamenController {
             );
 
 
-           // console.log("REPONSE API :", res);
+            // console.log("REPONSE API :", res);
 
 
             if (!res.ok) {
@@ -640,7 +689,7 @@ export default class ExamenController {
             );
 
 
-          //  console.log("REPONSE UPDATE :", res);
+            //  console.log("REPONSE UPDATE :", res);
 
 
             if (!res.ok) {
@@ -712,7 +761,7 @@ export default class ExamenController {
                     token
                 );
 
-              //  console.log("REPONSE SUPPRESSION :", res);
+                //  console.log("REPONSE SUPPRESSION :", res);
 
 
                 if (!res.ok) {
@@ -888,4 +937,143 @@ export default class ExamenController {
     static async exportPDF() {
         await this.downloadExport("pdf");
     }
+
+    static initImportExcel() {
+    const inputQuestions = document.getElementById("excel-questions");
+    const inputReponses = document.getElementById("excel-reponses");
+
+    if (!inputQuestions || !inputReponses) {
+        console.error("Les champs d'importation Excel sont introuvables.");
+        return;
+    }
+
+    let examenSelectionne = null;
+    let concoursSelectionne = null;
+
+    $("#dataTable")
+        .off("click.importQuestions", ".btn-import-questions")
+        .on("click.importQuestions", ".btn-import-questions", function () {
+            examenSelectionne = $(this).data("id");
+            concoursSelectionne = $(this).data("concours-id");
+
+            inputQuestions.value = "";
+            inputQuestions.click();
+        });
+
+    $("#dataTable")
+        .off("click.importReponses", ".btn-import-reponses")
+        .on("click.importReponses", ".btn-import-reponses", function () {
+            examenSelectionne = $(this).data("id");
+            concoursSelectionne = $(this).data("concours-id");
+
+            inputReponses.value = "";
+            inputReponses.click();
+        });
+
+    inputQuestions.addEventListener("change", async function () {
+        const file = this.files[0];
+
+        if (!file || !examenSelectionne || !concoursSelectionne) {
+            return;
+        }
+
+        const token = localStorage.getItem("admin_token");
+
+        if (!token) {
+            Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: "Importation des questions",
+            text: "Veuillez patienter...",
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const result = await ExamenModel.uploadQuestions(
+                token,
+                examenSelectionne,
+                concoursSelectionne,
+                file
+            );
+
+            if (!result.ok) {
+                throw new Error(
+                    result.data?.error || "L'importation des questions a échoué."
+                );
+            }
+
+            await Swal.fire({
+                icon: "success",
+                title: "Importation réussie",
+                text: result.data.message || "Les questions ont été importées."
+            });
+        } catch (error) {
+            console.error(error);
+
+            await Swal.fire({
+                icon: "error",
+                title: "Échec de l'importation",
+                text: error.message
+            });
+        } finally {
+            this.value = "";
+        }
+    });
+
+    inputReponses.addEventListener("change", async function () {
+        const file = this.files[0];
+
+        if (!file || !examenSelectionne || !concoursSelectionne) {
+            return;
+        }
+
+        const token = localStorage.getItem("admin_token");
+
+        if (!token) {
+            Swal.fire("Session expirée", "Veuillez vous reconnecter.", "warning");
+            return;
+        }
+
+        Swal.fire({
+            title: "Importation des réponses",
+            text: "Veuillez patienter...",
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const result = await ExamenModel.uploadReponses(
+                token,
+                examenSelectionne,
+                concoursSelectionne,
+                file
+            );
+
+            if (!result.ok) {
+                throw new Error(
+                    result.data?.error || "L'importation des réponses a échoué."
+                );
+            }
+
+            await Swal.fire({
+                icon: "success",
+                title: "Importation réussie",
+                text: result.data.message || "Les réponses ont été importées."
+            });
+        } catch (error) {
+            console.error(error);
+
+            await Swal.fire({
+                icon: "error",
+                title: "Échec de l'importation",
+                text: error.message
+            });
+        } finally {
+            this.value = "";
+        }
+    });
+}
 }
