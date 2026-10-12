@@ -129,6 +129,11 @@
                                                 </th>
 
                                                 <th class="text-center">
+                                                    Description
+                                                </th>
+
+                                                
+                                                <th class="text-center">
                                                     Statut
                                                 </th>
 

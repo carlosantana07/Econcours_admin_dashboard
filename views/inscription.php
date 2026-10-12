@@ -73,6 +73,12 @@
                                             Importer une liste
                                         </button>
 
+                                        <button type="button" style="background-color: #e3e330;"
+                                         class="btn btn-primary" id="btnEnvoyerMessages"> 
+                                         <i class="fa-solid fa-paper-plane"></i>
+                                         Envoyer un message 
+                                        </button>
+
                                     </div>
 
                                 </div>
@@ -173,6 +179,7 @@
     <script type="module">
         import InscriptionController from "../controllers/InscriptionController.js";
         import AdminController from "../Controllers/AdminController.js";
+        import MessageController from "../controllers/messageController.js";
         document.addEventListener("DOMContentLoaded", () => {
             const token = AdminController.checkAuth();
 
@@ -181,7 +188,7 @@
             }
 
             InscriptionController.initInscriptionConcours();
-           // InscriptionController.initDataTable();
+            // InscriptionController.initDataTable();
             InscriptionController.loadCentres();
             InscriptionController.loadConcours();
             InscriptionController.loadCandidats();
@@ -189,6 +196,7 @@
             InscriptionController.initDeleteInscription();
             AdminController.initImportListe();
             InscriptionController.initDataTable();
+            MessageController.init();
             AdminController.initLogout();
             $(document).on("change", "#id_concours", async function() {
 

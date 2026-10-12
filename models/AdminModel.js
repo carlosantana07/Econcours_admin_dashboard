@@ -57,7 +57,9 @@ export default class AdminModel {
             draw: params.draw ?? 0,
             start: params.start ?? 0,
             length: params.length ?? 10,
-            search: params.search ?? ""
+            search: params.search ?? "",
+            orderColumn: params.orderColumn ?? 6,
+            orderDir: params.orderDir ?? "desc"
         });
 
         const url =
@@ -65,6 +67,7 @@ export default class AdminModel {
 
         const res = await fetch(url, {
             method: "GET",
+            cache: "no-store",
             headers: {
                 "Authorization": "Bearer " + token
             }
@@ -165,13 +168,6 @@ export default class AdminModel {
         formData.append("type", type);
         formData.append("file", file);
 
-        // console.log("IMPORT EXCEL :", {
-        //     type,
-        //     fichier: file.name,
-        //     format: file.type,
-        //     taille: file.size
-        // });
-
         const res = await fetch(`${API_URL}/create-client`, {
             method: "POST",
             headers: {
@@ -181,8 +177,6 @@ export default class AdminModel {
         });
 
         const result = await res.json();
-
-      //  console.log("RÉPONSE IMPORT :", result);
 
         return {
             ok: res.ok,
