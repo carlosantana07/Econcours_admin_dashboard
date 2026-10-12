@@ -25,7 +25,7 @@ export default class ConcoursModel {
 
         const result = await res.json();
 
-       console.log("RESULT API CONCOURS :", result);
+      //console.log("RESULT API CONCOURS :", result);
 
         return {
             ok: res.ok,

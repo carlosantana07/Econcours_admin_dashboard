@@ -218,4 +218,96 @@ export default class ExamenModel {
             blob: await res.blob()
         };
     }
+
+    static async uploadQuestions(token, idExamen, idConcours, file) {
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("id_examen", idExamen);
+    formData.append("id_concours", idConcours);
+
+    try {
+        const response = await fetch(`${API_URL}/upload-exam-question`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const text = await response.text();
+
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = {
+                message: text || "Réponse invalide du serveur."
+            };
+        }
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data
+        };
+    } catch (error) {
+        console.error("Erreur lors de l'importation des questions :", error);
+
+        return {
+            ok: false,
+            status: 0,
+            data: {
+                message: "Impossible de contacter le serveur."
+            }
+        };
+    }
+}
+
+static async uploadReponses(token, idExamen, idConcours, file) {
+    const formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("id_examen", idExamen);
+    formData.append("id_concours", idConcours);
+
+    try {
+        const response = await fetch(`${API_URL}/upload-exam-response`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const text = await response.text();
+
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch {
+            data = {
+                message: text || "Réponse invalide du serveur."
+            };
+        }
+
+        return {
+            ok: response.ok,
+            status: response.status,
+            data
+        };
+    } catch (error) {
+        console.error("Erreur lors de l'importation des réponses :", error);
+
+        return {
+            ok: false,
+            status: 0,
+            data: {
+                message: "Impossible de contacter le serveur."
+            }
+        };
+    }
+}
 }
