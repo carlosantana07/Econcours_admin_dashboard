@@ -76,6 +76,29 @@ export default class InscriptionController {
         });
     }
 
+    static async openEditModal(btn) {
+        const idInscription = btn.dataset.id;
+        const statut = btn.dataset.statut;
+        const idCentre = btn.dataset.centre;
+        const idConcours = btn.dataset.concours;
+
+        document.getElementById("edit_id_inscription").value = idInscription;
+        document.getElementById("edit_statut").value = statut;
+
+        await InscriptionController.loadCentresByConcours(
+            idConcours,
+            "#edit_centre"
+        );
+
+        $("#edit_centre")
+            .val(String(idCentre))
+            .trigger("change.select2");
+
+        $("#editInscriptionModal").modal("show");
+    }
+
+
+
     // ===== CHARGEMENT DES SELECTS =====
     static async loadConcours() {
 
@@ -567,10 +590,15 @@ export default class InscriptionController {
                         </td>
 
                         <td>
-                            <span class="badge bg-info">
-                                ${d.statut_inscription || "-"}
-                            </span>
-                        </td>
+    <span class="badge ${d.statut_inscription === "VALIDEE"
+                            ? "bg-success"
+                            : d.statut_inscription === "REJETEE"
+                                ? "bg-danger"
+                                : "bg-warning text-dark"
+                        } statut-inscription">
+        ${InscriptionController.escapeHTML(d.statut_inscription || "EN_ATTENTE")}
+    </span>
+</td>
 
                         <td>
                             ${d.date_inscription
@@ -844,7 +872,9 @@ export default class InscriptionController {
                         text: error.message ||
                             "Impossible de valider cette inscription."
                     });
-                } finally {
+
+                }
+                finally {
                     checkbox.disabled = false;
                 }
             }
@@ -877,7 +907,7 @@ export default class InscriptionController {
                     return;
                 }
 
-                const motifsHTML = `
+                const contenuHTML = `
     <div class="rejet-form">
 
         <div class="rejet-intro">
@@ -1096,7 +1126,7 @@ export default class InscriptionController {
 
                 const resultat = await Swal.fire({
                     title: "Rejeter l'inscription",
-                    html: motifsHTML,
+                    html: contenuHTML,
                     width: 600,
                     showCancelButton: true,
                     confirmButtonText: "Confirmer le rejet",
@@ -1150,7 +1180,7 @@ export default class InscriptionController {
                     preConfirm: () => {
                         const popup = Swal.getPopup();
 
-                        const motifs = Array.from(
+                        const contenu = Array.from(
                             popup.querySelectorAll(".motif-rejet:checked")
                         ).map(input => input.value);
 
@@ -1168,17 +1198,17 @@ export default class InscriptionController {
                                 return false;
                             }
 
-                            motifs.push(`Autre motif : ${precision}`);
+                            contenu.push(`Autre motif : ${precision}`);
                         }
 
-                        if (motifs.length === 0) {
+                        if (contenu.length === 0) {
                             Swal.showValidationMessage(
                                 "Sélectionnez au moins un motif de rejet."
                             );
                             return false;
                         }
 
-                        return motifs;
+                        return contenu;
                     }
 
 
@@ -1198,7 +1228,7 @@ export default class InscriptionController {
                             {
                                 id_inscription: idInscription,
                                 statut_inscription: "REJETEE",
-                                motifs: resultat.value
+                                contenu: resultat.value
                             }
                         );
 
