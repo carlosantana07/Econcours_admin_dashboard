@@ -238,4 +238,23 @@ export default class InscriptionModel {
         };
     }
 
+
+    static async traiterCandidature(token, payload) {
+        const res = await fetch(
+            `${API_URL}/inscriptions/traiter-candidature`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        const data = await res.json();
+        return { ok: res.ok, data };
+    }
+
+
 }

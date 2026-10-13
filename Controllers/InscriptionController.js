@@ -498,14 +498,52 @@ export default class InscriptionController {
                                         class="d-block mb-1"
                                     >
                                         <i class="fa-solid fa-file-pdf text-danger me-1"></i>
-                                        Diplôme ${index + 1}
+                                        ${InscriptionController.escapeHTML(`Diplôme ${index + 1}`)}
                                     </a>
                                 `
                                 )
                                 .join("")
                             : "-";
 
+
+                    const documents = Array.isArray(d.candidat?.document)
+                        ? d.candidat.document
+                        : d.candidat?.document
+                            ? [d.candidat.document]
+                            : [];
+
+                    const documentsHTML = documents.length
+                        ? documents.map((document, index) => {
+                            const url = document.url || document.fichier;
+                            const type = document.type_document || `Document ${index + 1}`;
+
+                            if (!url) {
+                                return `
+                <span class="d-block text-muted mb-1">
+                    <i class="fa-solid fa-file-circle-question me-1"></i>
+                    ${InscriptionController.escapeHTML(type)} : lien indisponible
+                </span>
+            `;
+                            }
+
+                            return `
+            <a
+                href="${InscriptionController.escapeHTML(url)}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="d-block mb-1"
+                title="Consulter ${InscriptionController.escapeHTML(type)}"
+            >
+                <i class="fa-solid fa-file-lines text-primary me-1"></i>
+                ${InscriptionController.escapeHTML(type)}
+            </a>
+        `;
+                        }).join("")
+                        : '<span class="text-muted">Aucun document</span>';
+
                     return `
+
+
                     <tr>
 
                         <td>
@@ -525,6 +563,10 @@ export default class InscriptionController {
                         </td>
 
                         <td>
+                            ${documentsHTML}
+                        </td>
+
+                        <td>
                             <span class="badge bg-info">
                                 ${d.statut_inscription || "-"}
                             </span>
@@ -538,6 +580,30 @@ export default class InscriptionController {
                             : "-"
                         }
                         </td>
+
+                       <td class="checkbox-column text-center">
+                        <input
+                            type="checkbox"
+                            class="form-check-input checkbox-valider-candidature"
+                            data-id="${d.id_inscription}"
+                            data-statut="${d.statut_inscription || "EN_ATTENTE"}"
+                            ${d.statut_inscription === "VALIDEE" ? "checked" : ""}
+                            aria-label="Valider la candidature"
+                            title="Valider la candidature"
+                        >
+                    </td>
+
+                    <td class="checkbox-column text-center">
+                        <input
+                            type="checkbox"
+                            class="form-check-input checkbox-rejeter-candidature"
+                            data-id="${d.id_inscription}"
+                            data-statut="${d.statut_inscription || "EN_ATTENTE"}"
+                            ${d.statut_inscription === "REJETEE" ? "checked" : ""}
+                            aria-label="Rejeter la candidature"
+                            title="Rejeter la candidature"
+                        >
+                    </td>
 
                         <td class="text-center">
                             <button
@@ -630,8 +696,11 @@ export default class InscriptionController {
                             <th>Catégorie</th>
                             <th>Centre</th>
                             <th>Diplôme</th>
+                            <th>Documents</th>
                             <th>Statut</th>
                             <th>Date</th>
+                            <th class="checkbox-column">Valider</th>
+                            <th class="checkbox-column">Rejeter</th>
                             <th>Modifier</th>
                             <th>Supprimer</th>
                         </tr>
@@ -647,6 +716,8 @@ export default class InscriptionController {
         `;
 
             $("#detailInscriptionModal").modal("show");
+
+            InscriptionController.initTraitementCandidatures();
 
         } catch (error) {
 
@@ -665,39 +736,517 @@ export default class InscriptionController {
         }
     }
 
-    // ===== MODAL DE MODIFICATION =====
-    static async openEditModal(btn) {
-
-        const idInscription = btn.dataset.id;
-        const statut = btn.dataset.statut;
-        const idCentre = btn.dataset.centre;
-        const idConcours = btn.dataset.concours;
-
-        if (!idConcours) {
-            Swal.fire({
-                icon: "error",
-                title: "Erreur",
-                text: "Le concours de cette inscription est introuvable."
-            });
-            return;
-        }
-
-        $("#edit_id_inscription").val(idInscription);
-
-        $("#edit_statut").val(statut);
-
-        await InscriptionController.loadCentresByConcours(
-            idConcours,
-            "#edit_centre"
-        );
-
-        $("#edit_centre")
-            .val(String(idCentre))
-            .trigger("change.select2");
-
-        $("#editInscriptionModal").modal("show");
+    static escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
     }
 
+    static initTraitementCandidatures() {
+        const container = $("#detailContent");
+
+        container.off("change.traitementCandidature");
+
+        container.on(
+            "change.traitementCandidature",
+            ".checkbox-valider-candidature",
+            async function () {
+                const checkbox = this;
+                const idInscription = Number(checkbox.dataset.id);
+                const statutPrecedent = checkbox.dataset.statut;
+
+                if (!checkbox.checked) {
+                    checkbox.checked = statutPrecedent === "VALIDEE";
+                    return;
+                }
+
+                const confirmation = await Swal.fire({
+                    icon: "question",
+                    title: "Valider cette inscription ?",
+                    text: "Cette action confirmera l'inscription du candidat.",
+                    showCancelButton: true,
+                    confirmButtonText: "Oui, valider",
+                    cancelButtonText: "Annuler",
+                    confirmButtonColor: "#198754",
+                    reverseButtons: true
+                });
+
+                if (!confirmation.isConfirmed) {
+                    checkbox.checked = statutPrecedent === "VALIDEE";
+                    return;
+                }
+
+                const token = AdminController.getToken();
+
+                if (!token) {
+                    checkbox.checked = statutPrecedent === "VALIDEE";
+
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Session expirée",
+                        text: "Veuillez vous reconnecter."
+                    });
+
+                    return;
+                }
+
+                checkbox.disabled = true;
+
+                try {
+                    const response = await InscriptionModel.traiterCandidature(
+                        token,
+                        {
+                            id_inscription: idInscription,
+                            statut_inscription: "VALIDEE"
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            response.data?.message ||
+                            "La validation de l'inscription a échoué."
+                        );
+                    }
+
+                    const row = checkbox.closest("tr");
+                    const statutBadge = row.querySelector(".statut-inscription");
+                    const checkboxRejet = row.querySelector(
+                        ".checkbox-rejeter-candidature"
+                    );
+
+                    statutBadge.textContent = "VALIDEE";
+                    statutBadge.className = "badge bg-success statut-inscription";
+
+                    checkbox.dataset.statut = "VALIDEE";
+
+                    if (checkboxRejet) {
+                        checkboxRejet.checked = false;
+                        checkboxRejet.dataset.statut = "VALIDEE";
+                    }
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Inscription validée",
+                        text: "La décision a été enregistrée.",
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                } catch (error) {
+                    checkbox.checked = statutPrecedent === "VALIDEE";
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Erreur",
+                        text: error.message ||
+                            "Impossible de valider cette inscription."
+                    });
+                } finally {
+                    checkbox.disabled = false;
+                }
+            }
+        );
+
+        container.on(
+            "change.traitementCandidature",
+            ".checkbox-rejeter-candidature",
+            async function () {
+                const checkbox = this;
+                const idInscription = Number(checkbox.dataset.id);
+                const statutPrecedent = checkbox.dataset.statut;
+
+                if (!checkbox.checked) {
+                    checkbox.checked = statutPrecedent === "REJETEE";
+                    return;
+                }
+
+                const token = AdminController.getToken();
+
+                if (!token) {
+                    checkbox.checked = statutPrecedent === "REJETEE";
+
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Session expirée",
+                        text: "Veuillez vous reconnecter."
+                    });
+
+                    return;
+                }
+
+                const motifsHTML = `
+    <div class="rejet-form">
+
+        <div class="rejet-intro">
+            <div class="rejet-intro-icon">
+                <i class="fa-solid fa-file-circle-xmark"></i>
+            </div>
+
+            <div class="rejet-intro-text">
+                <h6>Pourquoi rejeter cette inscription ?</h6>
+                <p>
+                    Sélectionnez un ou plusieurs motifs justifiant
+                    le rejet du dossier.
+                </p>
+            </div>
+        </div>
+
+        <div class="rejet-selection-header">
+            <span>
+                <i class="fa-solid fa-list-check me-1"></i>
+                Motifs de rejet
+            </span>
+
+            <span class="rejet-counter">
+                <span id="nombre-motifs-rejet">0</span> sélectionné(s)
+            </span>
+        </div>
+
+        <div id="motifs-rejet-form" class="rejet-motifs-grid">
+
+            <label class="rejet-motif-card" for="motif-dossier">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Dossier incomplet"
+                    id="motif-dossier"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-folder-open"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Dossier incomplet</strong>
+                    <small>Des pièces justificatives sont manquantes.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-diplome">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Diplôme non conforme"
+                    id="motif-diplome"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Diplôme non conforme</strong>
+                    <small>Le diplôme ne correspond pas aux exigences.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-diplome-illisible">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Diplôme illisible"
+                    id="motif-diplome-illisible"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Diplôme illisible</strong>
+                    <small>Le document est flou ou inexploitable.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-identite">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Pièce d'identité non conforme"
+                    id="motif-identite"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-id-card"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Pièce d'identité non conforme</strong>
+                    <small>La pièce fournie est invalide ou incorrecte.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-informations">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Informations personnelles incorrectes"
+                    id="motif-informations"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-user-pen"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Informations incorrectes</strong>
+                    <small>Les renseignements du candidat sont inexacts.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-conditions">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Conditions d'accès non remplies"
+                    id="motif-conditions"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-user-lock"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Conditions d'accès non remplies</strong>
+                    <small>Le candidat ne remplit pas les critères requis.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card" for="motif-expire">
+                <input
+                    class="motif-rejet"
+                    type="checkbox"
+                    value="Document expiré"
+                    id="motif-expire"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Document expiré</strong>
+                    <small>La validité du document est dépassée.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+            <label class="rejet-motif-card rejet-motif-autre"
+                   for="motif-autre">
+                <input
+                    type="checkbox"
+                    id="motif-autre"
+                >
+                <span class="rejet-motif-icon">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </span>
+                <span class="rejet-motif-content">
+                    <strong>Autre motif</strong>
+                    <small>Précisez un autre motif de rejet.</small>
+                </span>
+                <span class="rejet-motif-check">
+                    <i class="fa-solid fa-check"></i>
+                </span>
+            </label>
+
+        </div>
+
+        <div id="autre-motif-container" class="autre-motif-container">
+            <label for="motif-autre-texte" class="form-label">
+                <i class="fa-solid fa-pen me-1"></i>
+                Précision du motif
+                <span class="text-danger">*</span>
+            </label>
+
+            <textarea
+                id="motif-autre-texte"
+                class="form-control"
+                rows="3"
+                maxlength="1000"
+                placeholder="Expliquez clairement la raison du rejet..."
+            ></textarea>
+
+            <div class="autre-motif-footer">
+                <span>Ce motif sera enregistré dans le dossier.</span>
+                <span id="compteur-caracteres">0/1000</span>
+            </div>
+        </div>
+
+        <div class="rejet-warning">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>
+                Vérifiez les motifs sélectionnés avant de confirmer.
+                Cette décision sera enregistrée pour cette inscription.
+            </span>
+        </div>
+
+    </div>
+`;
+
+
+
+                const resultat = await Swal.fire({
+                    title: "Rejeter l'inscription",
+                    html: motifsHTML,
+                    width: 600,
+                    showCancelButton: true,
+                    confirmButtonText: "Confirmer le rejet",
+                    cancelButtonText: "Annuler",
+                    confirmButtonColor: "#dc3545",
+                    reverseButtons: true,
+                    focusConfirm: false,
+
+
+                    didOpen: () => {
+                        const popup = Swal.getPopup();
+
+                        const autreCheckbox = popup.querySelector("#motif-autre");
+                        const autreContainer = popup.querySelector("#autre-motif-container");
+                        const autreTexte = popup.querySelector("#motif-autre-texte");
+                        const compteur = popup.querySelector("#nombre-motifs-rejet");
+                        const compteurCaracteres = popup.querySelector("#compteur-caracteres");
+
+                        const mettreAJour = () => {
+                            const nombreMotifs = popup.querySelectorAll(
+                                ".motif-rejet:checked"
+                            ).length;
+
+                            compteur.textContent =
+                                nombreMotifs + (autreCheckbox.checked ? 1 : 0);
+                        };
+
+                        popup.querySelectorAll(".motif-rejet").forEach(input => {
+                            input.addEventListener("change", mettreAJour);
+                        });
+
+                        autreCheckbox.addEventListener("change", () => {
+                            autreContainer.classList.toggle(
+                                "visible",
+                                autreCheckbox.checked
+                            );
+
+                            if (!autreCheckbox.checked) {
+                                autreTexte.value = "";
+                            }
+
+                            mettreAJour();
+                        });
+
+                        autreTexte.addEventListener("input", () => {
+                            compteurCaracteres.textContent =
+                                `${autreTexte.value.length}/1000`;
+                        });
+                    },
+
+                    preConfirm: () => {
+                        const popup = Swal.getPopup();
+
+                        const motifs = Array.from(
+                            popup.querySelectorAll(".motif-rejet:checked")
+                        ).map(input => input.value);
+
+                        const autreCheckbox = popup.querySelector("#motif-autre");
+                        const autreTexte = popup.querySelector("#motif-autre-texte");
+
+                        if (autreCheckbox.checked) {
+                            const precision = autreTexte.value.trim();
+
+                            if (!precision) {
+                                Swal.showValidationMessage(
+                                    "Veuillez préciser le motif de rejet."
+                                );
+                                autreTexte.focus();
+                                return false;
+                            }
+
+                            motifs.push(`Autre motif : ${precision}`);
+                        }
+
+                        if (motifs.length === 0) {
+                            Swal.showValidationMessage(
+                                "Sélectionnez au moins un motif de rejet."
+                            );
+                            return false;
+                        }
+
+                        return motifs;
+                    }
+
+
+                });
+
+                if (!resultat.isConfirmed) {
+                    checkbox.checked = statutPrecedent === "REJETEE";
+                    return;
+                }
+
+                checkbox.disabled = true;
+
+                try {
+                    const response =
+                        await InscriptionModel.traiterCandidature(
+                            token,
+                            {
+                                id_inscription: idInscription,
+                                statut_inscription: "REJETEE",
+                                motifs: resultat.value
+                            }
+                        );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            response.data?.message ||
+                            "Le rejet de l'inscription a échoué."
+                        );
+                    }
+
+                    const row = checkbox.closest("tr");
+                    const statutBadge = row.querySelector(".statut-inscription");
+                    const checkboxValidation = row.querySelector(
+                        ".checkbox-valider-candidature"
+                    );
+
+                    statutBadge.textContent = "REJETEE";
+                    statutBadge.className = "badge bg-danger statut-inscription";
+
+                    checkbox.dataset.statut = "REJETEE";
+
+                    if (checkboxValidation) {
+                        checkboxValidation.checked = false;
+                        checkboxValidation.dataset.statut = "REJETEE";
+                    }
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Inscription rejetée",
+                        text: "Le statut et les motifs ont été transmis au serveur.",
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } catch (error) {
+                    checkbox.checked = statutPrecedent === "REJETEE";
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Erreur",
+                        text: error.message ||
+                            "Impossible de rejeter cette inscription."
+                    });
+                } finally {
+                    checkbox.disabled = false;
+                }
+            }
+        );
+    }
     // ===== ENREGISTRER LA MODIFICATION =====
     static async saveInscription() {
 

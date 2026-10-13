@@ -1340,3 +1340,339 @@ body {
   color: #15803D;
   border: 1px solid #86EFAC;
 }
+
+#detailInscriptionModal table th.checkbox-column,
+#detailInscriptionModal table td.checkbox-column {
+    width: 90px;
+    min-width: 90px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#detailInscriptionModal table td.checkbox-column .form-check-input {
+    display: block;
+    float: none;
+    margin: 0 auto;
+    position: static;
+    cursor: pointer;
+}
+/* 
+Modal rejet inscription */
+
+.swal2-popup:has(.rejet-form) {
+    padding: 0 !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    width: min(680px, calc(100vw - 24px)) !important;
+}
+
+.swal2-popup:has(.rejet-form) .swal2-title {
+    padding: 25px 24px 8px;
+    color: #17233b;
+    font-size: 23px;
+    font-weight: 750;
+}
+
+.swal2-popup:has(.rejet-form) .swal2-html-container {
+    margin: 0;
+    padding: 12px 24px 20px;
+    text-align: left;
+    overflow-x: hidden;
+}
+
+.rejet-form {
+    color: #344054;
+    font-family: inherit;
+}
+
+.rejet-intro {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    margin-bottom: 22px;
+    background: #fff3f2;
+    border: 1px solid #ffe0dc;
+    border-radius: 12px;
+}
+
+.rejet-intro-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    color: #dc3545;
+    background: #ffffff;
+    border-radius: 12px;
+    font-size: 21px;
+}
+
+.rejet-intro-text h6 {
+    margin: 0 0 5px;
+    color: #17233b;
+    font-size: 15px;
+    font-weight: 750;
+}
+
+.rejet-intro-text p {
+    margin: 0;
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.rejet-selection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: #17233b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.rejet-counter {
+    padding: 6px 10px;
+    color: #b42318;
+    background: #fff1f0;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.rejet-motifs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.rejet-motif-card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    min-height: 88px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #e4e7ec;
+    border-radius: 11px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.2s ease,
+                background-color 0.2s ease,
+                box-shadow 0.2s ease;
+    text-align: left;
+}
+
+.rejet-motif-card:hover {
+    border-color: #f19a9f;
+    background: #fffafa;
+}
+
+.rejet-motif-card:has(input:checked) {
+    border-color: #dc3545;
+    background: #fff4f3;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.08);
+}
+
+.rejet-motif-card input[type="checkbox"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.rejet-motif-card input[type="checkbox"]:focus-visible
+    ~ .rejet-motif-check {
+    outline: 2px solid #dc3545;
+    outline-offset: 3px;
+}
+
+.rejet-motif-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    color: #667085;
+    background: #f2f4f7;
+    border-radius: 9px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+}
+
+.rejet-motif-card:has(input:checked) .rejet-motif-icon {
+    color: #c52232;
+    background: #ffe1e1;
+}
+
+.rejet-motif-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.rejet-motif-content strong {
+    color: #344054;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.rejet-motif-content small {
+    color: #667085;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.rejet-motif-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 19px;
+    width: 19px;
+    height: 19px;
+    color: #ffffff;
+    background: #ffffff;
+    border: 1px solid #d0d5dd;
+    border-radius: 50%;
+    font-size: 9px;
+    transition: all 0.2s ease;
+}
+
+.rejet-motif-card:has(input:checked) .rejet-motif-check {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+.autre-motif-container {
+    display: none;
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e4e7ec;
+    border-radius: 12px;
+}
+
+.autre-motif-container.visible {
+    display: block;
+    animation: apparitionMotif 0.2s ease;
+}
+
+.autre-motif-container .form-label {
+    color: #344054;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.autre-motif-container textarea {
+    min-height: 95px;
+    border: 1px solid #d0d5dd;
+    border-radius: 9px;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.autre-motif-container textarea:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.autre-motif-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    color: #667085;
+    font-size: 10px;
+}
+
+.rejet-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 16px;
+    padding: 12px;
+    color: #7a5d16;
+    background: #fffaeb;
+    border: 1px solid #f9e4a5;
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.rejet-warning i {
+    margin-top: 2px;
+    font-size: 14px;
+}
+
+.swal2-popup:has(.rejet-form) .swal2-actions {
+    gap: 10px;
+    margin: 0;
+    padding: 16px 24px 22px;
+    border-top: 1px solid #eaecf0;
+    background: #ffffff;
+}
+
+.swal2-popup:has(.rejet-form) .swal2-confirm,
+.swal2-popup:has(.rejet-form) .swal2-cancel {
+    min-height: 42px;
+    margin: 0;
+    padding: 10px 18px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.swal2-popup:has(.rejet-form) .swal2-cancel {
+    color: #344054;
+    background: #f2f4f7;
+}
+
+@keyframes apparitionMotif {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 520px) {
+    .swal2-popup:has(.rejet-form) .swal2-title {
+        padding: 20px 16px 8px;
+        font-size: 19px;
+    }
+
+    .swal2-popup:has(.rejet-form) .swal2-html-container {
+        padding: 10px 14px 16px;
+    }
+
+    .rejet-motifs-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rejet-motif-card {
+        min-height: 75px;
+    }
+
+    .swal2-popup:has(.rejet-form) .swal2-actions {
+        padding: 14px;
+    }
+}
+
+
