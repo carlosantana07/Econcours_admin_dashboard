@@ -381,3 +381,65 @@
 
 </div>
 
+<div class="modal fade" id="modalQuestionsReponses" tabindex="-1" aria-labelledby="modalQuestionsReponsesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white" style="color: white;">
+                <div>
+                    <h5 class="modal-title" id="modalQuestionsReponsesLabel", style="color: white;">
+                        <i class="fa-solid fa-list-check me-2"></i>
+                        Questions et réponses
+                    </h5>
+                    <small id="titreExamenQuestionsReponses"></small>
+                </div>
+                 <button type="button"
+                    class="close"
+                    data-dismiss="modal">
+
+                    <span>&times;</span>
+
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div id="resumeQuestionsReponses" class="row g-3 mb-4"></div>
+
+                <div id="chargementQuestionsReponses" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-2 mb-0">Chargement des questions et réponses...</p>
+                </div>
+
+                <div id="erreurQuestionsReponses" class="alert alert-danger d-none"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 70px;">N°</th>
+                                <th>Question</th>
+                                <th>Réponse</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableQuestionsReponses">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    Aucune donnée chargée.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    Fermer
+                </button>
+            </div> -->
+        </div>
+    </div>
+</div>
+

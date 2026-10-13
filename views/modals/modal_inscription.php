@@ -203,3 +203,82 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalRejetCandidature" tabindex="-1" aria-labelledby="modalRejetCandidatureLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalRejetCandidatureLabel">
+                    <i class="fa-solid fa-ban me-2"></i>
+                    Rejeter la candidature
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="text-muted">
+                    Sélectionnez un ou plusieurs motifs justifiant le rejet.
+                </p>
+
+                <input type="hidden" id="idInscriptionRejet">
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Dossier incomplet" id="motifIncomplet">
+                    <label class="form-check-label" for="motifIncomplet">Dossier incomplet</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Diplôme non conforme" id="motifDiplome">
+                    <label class="form-check-label" for="motifDiplome">Diplôme non conforme</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Diplôme illisible" id="motifIllisible">
+                    <label class="form-check-label" for="motifIllisible">Diplôme illisible</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Pièce d'identité non conforme" id="motifIdentite">
+                    <label class="form-check-label" for="motifIdentite">Pièce d'identité non conforme</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Informations personnelles incorrectes" id="motifInformations">
+                    <label class="form-check-label" for="motifInformations">Informations personnelles incorrectes</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Conditions d'accès non remplies" id="motifConditions">
+                    <label class="form-check-label" for="motifConditions">Conditions d'accès au concours non remplies</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input motif-rejet" type="checkbox" value="Document expiré" id="motifExpire">
+                    <label class="form-check-label" for="motifExpire">Document expiré</label>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="motifAutre">
+                    <label class="form-check-label" for="motifAutre">Autre motif</label>
+                </div>
+
+                <div id="conteneurAutreMotif" class="mt-3 d-none">
+                    <label for="texteAutreMotif" class="form-label">Précisez le motif</label>
+                    <textarea class="form-control" id="texteAutreMotif" rows="3" maxlength="1000" placeholder="Expliquez le motif du rejet..."></textarea>
+                </div>
+
+                <div id="erreurMotifRejet" class="alert alert-danger mt-3 d-none"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="btnConfirmerRejet">
+                    <i class="fa-solid fa-ban me-1"></i>
+                    Confirmer le rejet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
